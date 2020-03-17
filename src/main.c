@@ -27,12 +27,12 @@ void compileShaders(void)
     glCompileShader(vertexShader);
 
     shaderSource = readFromFile("../src/shaders/tesselation_control.glsl");
-    tesselationControlShader = glCreateShader(GL_FRAGMENT_SHADER);
+    tesselationControlShader = glCreateShader(GL_TESS_CONTROL_SHADER);
     glShaderSource(tesselationControlShader, 1, &shaderSource , NULL);
     glCompileShader(tesselationControlShader);
 
     shaderSource = readFromFile("../src/shaders/tesselation_evaluation.glsl");
-    tesselationEvaluationShader = glCreateShader(GL_FRAGMENT_SHADER);
+    tesselationEvaluationShader = glCreateShader(GL_TESS_EVALUATION_SHADER);
     glShaderSource(tesselationEvaluationShader, 1, &shaderSource , NULL);
     glCompileShader(tesselationEvaluationShader);
 
@@ -63,6 +63,7 @@ void render()
 
     glUseProgram(shaderProgram);
 
+    glPatchParameteri(GL_PATCH_VERTICES, 3);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glDrawArrays(GL_PATCHES, 0, 3);
 }
