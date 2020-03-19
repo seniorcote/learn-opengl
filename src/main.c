@@ -7,7 +7,7 @@
 #define TICKS_PER_SECOND 20
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
-#define WINDOW_NAME "learn_opengl"
+#define WINDOW_NAME "learn-opengl"
 
 GLFWwindow* window;
 GLuint shaderProgram;

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(learn_opengl)
+project(learn-opengl)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS "-lm -Wall")
