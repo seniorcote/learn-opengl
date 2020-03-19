@@ -1,6 +1,8 @@
 #include <sys/time.h>
 
-double getCurrentTime()
+double getCurrentTime(void);
+
+double getCurrentTime(void)
 {
     struct timeval t;
     struct timezone tz;
