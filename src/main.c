@@ -65,9 +65,6 @@ void initShaderProgram(void)
     shaderProgram = glCreateProgram();
 
     compileShader("../src/shaders/vs.glsl", GL_VERTEX_SHADER);
-    compileShader("../src/shaders/tcs.glsl", GL_TESS_CONTROL_SHADER);
-    compileShader("../src/shaders/tes.glsl", GL_TESS_EVALUATION_SHADER);
-    compileShader("../src/shaders/gs.glsl", GL_GEOMETRY_SHADER);
     compileShader("../src/shaders/fs.glsl", GL_FRAGMENT_SHADER);
 
     glLinkProgram(shaderProgram);
@@ -134,9 +131,7 @@ void render(void)
 
     glUseProgram(shaderProgram);
 
-    glPatchParameteri(GL_PATCH_VERTICES, 3);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays(GL_PATCHES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 void processInput(void)
