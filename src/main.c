@@ -4,7 +4,7 @@
 #include "utils/file.c"
 #include "utils/time.c"
 
-#define TICKS_PER_SECOND 20
+#define TICKS_PER_SECOND 60
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
 #define WINDOW_NAME "learn-opengl"
@@ -109,9 +109,10 @@ void loop(void)
 
         while (lag >= msPerUpdate) {
             tick();
-            render();
             lag -= msPerUpdate;
         }
+
+        render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
