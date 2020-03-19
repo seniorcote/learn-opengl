@@ -1,100 +1,102 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include "errors.c"
 #include "utils/file.c"
 #include "utils/time.c"
 
-const int TICKS_PER_SECOND = 20;
+#define TICKS_PER_SECOND 20
+#define WINDOW_WIDTH 1024
+#define WINDOW_HEIGHT 768
+#define WINDOW_NAME "learn_opengl"
 
 GLFWwindow* window;
 GLuint shaderProgram;
 
-void processInput()
-{
-}
-
-void tick()
-{
-}
-
-void compileShaders(void)
-{
-    GLuint vertexShader, fragmentShader, tesselationControlShader, tesselationEvaluationShader;
-    shaderProgram = glCreateProgram();
-
-    const GLchar* shaderSource = readFromFile("../src/shaders/vertex.glsl");
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &shaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    shaderSource = readFromFile("../src/shaders/tesselation_control.glsl");
-    tesselationControlShader = glCreateShader(GL_TESS_CONTROL_SHADER);
-    glShaderSource(tesselationControlShader, 1, &shaderSource , NULL);
-    glCompileShader(tesselationControlShader);
-
-    shaderSource = readFromFile("../src/shaders/tesselation_evaluation.glsl");
-    tesselationEvaluationShader = glCreateShader(GL_TESS_EVALUATION_SHADER);
-    glShaderSource(tesselationEvaluationShader, 1, &shaderSource , NULL);
-    glCompileShader(tesselationEvaluationShader);
-
-    shaderSource = readFromFile("../src/shaders/fragment.glsl");
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &shaderSource , NULL);
-    glCompileShader(fragmentShader);
-
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, tesselationControlShader);
-    glAttachShader(shaderProgram, tesselationEvaluationShader);
-    glAttachShader(shaderProgram, fragmentShader);
-
-    glLinkProgram(shaderProgram);
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(tesselationControlShader);
-    glDeleteShader(tesselationEvaluationShader);
-    glDeleteShader(fragmentShader);
-
-    free(shaderSource);
-}
-
-void render()
-{
-    const GLfloat clearColor[] = { 0.1f, 0.1f, 0.1f, 1.0f };
-    glClearBufferfv(GL_COLOR, 0, clearColor);
-
-    glUseProgram(shaderProgram);
-
-    glPatchParameteri(GL_PATCH_VERTICES, 3);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays(GL_PATCHES, 0, 3);
-}
+void initWindow(void);
+void initGlew(void);
+void initShaderProgram(void);
+void compileShader(char* filename, GLenum type);
+void loop(void);
+void render(void);
+void processInput(void);
+void tick(void);
 
 int main(void)
+{
+    initWindow();
+    initGlew();
+    initShaderProgram();
+    loop();
+
+    return 0;
+}
+
+void initWindow(void)
 {
     if (!glfwInit()) {
         printf("%s\n", "Failed to initialize GLFW.");
 
-        return 1;
+        exit(GLFW_INIT_ERROR);
     }
 
-    window = glfwCreateWindow(640, 480, "Window", NULL, NULL);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, NULL, NULL);
 
     if (!window) {
         printf("%s\n", "Failed to create window.");
         glfwTerminate();
 
-        return 2;
+        exit(CREATE_WINDOW_ERROR);
     }
 
     glfwMakeContextCurrent(window);
+}
 
+void initGlew(void)
+{
     if (GLEW_OK != glewInit()) {
         printf("%s\n", "Failed to initialize GLEW.");
 
-        return 3;
+        exit(GLEW_INIT_ERROR);
+    }
+}
+
+void initShaderProgram(void)
+{
+    shaderProgram = glCreateProgram();
+
+    compileShader("../src/shaders/vs.glsl", GL_VERTEX_SHADER);
+    compileShader("../src/shaders/tcs.glsl", GL_TESS_CONTROL_SHADER);
+    compileShader("../src/shaders/tes.glsl", GL_TESS_EVALUATION_SHADER);
+    compileShader("../src/shaders/gs.glsl", GL_GEOMETRY_SHADER);
+    compileShader("../src/shaders/fs.glsl", GL_FRAGMENT_SHADER);
+
+    glLinkProgram(shaderProgram);
+}
+
+void compileShader(char* filename, GLenum type)
+{
+    char* src = readFromFile(filename);
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, (const GLchar *const *) &src, NULL);
+    glCompileShader(shader);
+
+    GLint isCompiled = 0;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
+
+    if (isCompiled == GL_FALSE) {
+        printf("%s %s.\n", "Failed to compile shader", filename);
+
+        exit(SHADER_COMPILATION_ERROR);
     }
 
-    compileShaders();
+    glAttachShader(shaderProgram, shader);
+    glDeleteShader(shader);
 
+    free(src);
+}
+
+void loop(void)
+{
     double previous = getCurrentTime();
     double lag = 0.0;
     double msPerUpdate = 1000.0 / TICKS_PER_SECOND;
@@ -123,6 +125,24 @@ int main(void)
     }
 
     glfwTerminate();
+}
 
-    return 0;
+void render(void)
+{
+    const GLfloat clearColor[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    glClearBufferfv(GL_COLOR, 0, clearColor);
+
+    glUseProgram(shaderProgram);
+
+    glPatchParameteri(GL_PATCH_VERTICES, 3);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArrays(GL_PATCHES, 0, 3);
+}
+
+void processInput(void)
+{
+}
+
+void tick(void)
+{
 }

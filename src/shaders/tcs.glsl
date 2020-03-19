@@ -5,7 +5,7 @@ layout (vertices = 3) out;
 void main(void)
 {
     if (gl_InvocationID == 0) {
-        gl_TessLevelInner[0] = 2.0;
+        gl_TessLevelInner[0] = 3.0;
         gl_TessLevelOuter[0] = 2.0;
         gl_TessLevelOuter[1] = 2.0;
         gl_TessLevelOuter[2] = 2.0;

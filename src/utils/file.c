@@ -1,29 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include "../errors.c"
 
-FILE* openFile(const char* filename)
+char* readFromFile(char* filename);
+char* fillBuffer(FILE* filePointer, int size);
+FILE* openFile(char* filename);
+int getFileSize(char* filename);
+
+char* readFromFile(char* filename)
 {
-    FILE* filePointer;
-
-    filePointer = fopen(filename, "r");
-
-    if (NULL == filePointer) {
-        printf("Failed to open %s.\n", filename);
-
-        exit(3);
-    }
-
-    return filePointer;
-}
-
-int getFileSize(const char* filename)
-{
-    struct stat st;
-
-    stat(filename, &st);
-
-    return st.st_size;
+    return fillBuffer(openFile(filename), getFileSize(filename));
 }
 
 char* fillBuffer(FILE* filePointer, int size)
@@ -38,11 +25,26 @@ char* fillBuffer(FILE* filePointer, int size)
     return buffer;
 }
 
-GLchar* readFromFile(const char* filename)
+FILE* openFile(char* filename)
 {
-    GLchar* buffer;
+    FILE* filePointer;
 
-    buffer = fillBuffer(openFile(filename), getFileSize(filename));
+    filePointer = fopen(filename, "r");
 
-    return buffer;
+    if (NULL == filePointer) {
+        printf("Failed to open %s.\n", filename);
+
+        exit(FAILED_TO_OPEN_FILE);
+    }
+
+    return filePointer;
+}
+
+int getFileSize(char* filename)
+{
+    struct stat st;
+
+    stat(filename, &st);
+
+    return st.st_size;
 }
