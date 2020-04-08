@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include "../errors.c"
 
 char* readFromFile(char* filename);
 char* fillBuffer(FILE* filePointer, int size);
@@ -34,7 +33,7 @@ FILE* openFile(char* filename)
     if (NULL == filePointer) {
         printf("Failed to open %s.\n", filename);
 
-        exit(FAILED_TO_OPEN_FILE);
+        exit(5);
     }
 
     return filePointer;
