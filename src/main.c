@@ -1,7 +1,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "matrix.c"
-#include "vector.c"
+#include "glm.c"
 #include "file.c"
 #include "time.c"
 
@@ -21,6 +20,11 @@ typedef struct {
 } mvp_t;
 
 typedef struct {
+    vector_t position;
+    vector_t target;
+} camera_t;
+
+typedef struct {
     float x;
     float y;
 } cursorPosition_t;
@@ -34,9 +38,11 @@ typedef struct {
 static window_t window;
 static mvp_t mvp;
 static cursorPosition_t cursorPosition;
+static camera_t camera;
 static GLuint shaderProgram;
 static GLuint matrixLocation;
 static attribute_t cube;
+static int keys[1024];
 
 void initWindow(void);
 void initGlew(void);
@@ -46,7 +52,9 @@ void compileShader(char* filename, GLenum type);
 void loop(void);
 void render(void);
 void tick(void);
+void processInput();
 void cursorPositionCallback(GLFWwindow* window, double x, double y);
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void initCube(void);
 void drawCube(void);
 
@@ -59,16 +67,16 @@ int main(void)
 
     matrixIdentity(mvp.model);
 
-    vector_t position = {0.0f, 3.0f, 15.0f};
-    vector_t target = {0.0f, 0.0f, 0.0f};
-    lookAt(mvp.view, position, target);
+    camera.position = (vector_t) {0.0f, 3.0f, 15.0f};
+    camera.target = (vector_t) {0.0f, 0.0f, 0.0f};
+    lookAt(mvp.view, camera.position, camera.target);
 
     matrixPerspective(
         mvp.projection,
         45.0f,
         (float) window.width / (float) window.height,
         0.1f,
-        20.0f
+        100.0f
     );
 
     loop();
@@ -84,11 +92,16 @@ void initWindow(void)
         exit(1);
     }
 
-    window.width = 800;
-    window.height = 600;
+    window.width = 1024;
+    window.height = 768;
     window.name[40] = "learn-opengl";
     window.window = glfwCreateWindow(window.width, window.height, window.name, NULL, NULL);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwSetCursorPosCallback(window.window, cursorPositionCallback);
+    glfwSetKeyCallback(window.window, keyCallback);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
     glfwSetInputMode(window.window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     if (!window.window) {
@@ -178,7 +191,7 @@ void loop(void)
         previous = current;
         lag += elapsed;
 
-        // processInput()
+        processInput();
 
         while (lag >= msPerUpdate) {
             tick();
@@ -216,6 +229,35 @@ void tick(void)
     glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, mvpMatrix);
 }
 
+void processInput()
+{
+    GLfloat cameraSpeed = 0.1f;
+
+    if (keys[GLFW_KEY_W]) {
+        camera.position.z -= cameraSpeed;
+        camera.target.z -= cameraSpeed;
+        lookAt(mvp.view, camera.position, camera.target);
+    }
+
+    if (keys[GLFW_KEY_S]) {
+        camera.position.z += cameraSpeed;
+        camera.target.z += cameraSpeed;
+        lookAt(mvp.view, camera.position, camera.target);
+    }
+
+    if (keys[GLFW_KEY_D]) {
+        camera.position.x += cameraSpeed;
+        camera.target.x += cameraSpeed;
+        lookAt(mvp.view, camera.position, camera.target);
+    }
+
+    if (keys[GLFW_KEY_A]) {
+        camera.position.x -= cameraSpeed;
+        camera.target.x -= cameraSpeed;
+        lookAt(mvp.view, camera.position, camera.target);
+    }
+}
+
 void cursorPositionCallback(GLFWwindow* window, double x, double y)
 {
     float xT = (float) x - cursorPosition.x;
@@ -223,6 +265,15 @@ void cursorPositionCallback(GLFWwindow* window, double x, double y)
 
     cursorPosition.x = (float) x;
     cursorPosition.y = (float) y;
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
+{
+    if (action == GLFW_PRESS) {
+        keys[key] = 1;
+    } else if (action == GLFW_RELEASE) {
+        keys[key] = 0;
+    }
 }
 
 void initCube(void)
@@ -354,32 +405,4 @@ void drawCube(void)
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
-}
-
-void lookAt(float* lookAt, vector_t position, vector_t target)
-{
-    vector_t cameraDirection, cameraRight;
-    vector_t up = {0.0f, 1.0f, 0.0f};
-
-    cameraDirection = vectorSubtract(position, target);
-    vectorNormalize(&cameraDirection);
-
-    cameraRight = vectorCross(up, cameraDirection);
-    vectorNormalize(&cameraRight);
-
-    float m1[16] = {
-        cameraRight.x, up.x, cameraDirection.x, 0.0f,
-        cameraRight.y, up.y, cameraDirection.y, 0.0f,
-        cameraRight.z, up.z, cameraDirection.z, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f,
-    };
-
-    float m2[16] = {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        -1 * position.x, -1 * position.y, -1 * position.z, 1.0f,
-    };
-
-    matrixMultiply(lookAt, m1, m2);
 }

@@ -1,5 +1,62 @@
-#include <math.h>
 #include <stdio.h>
+#include <math.h>
+#include <assert.h>
+
+#define PI 3.1415926535
+
+typedef struct {
+    GLfloat x, y, z;
+} vector_t;
+
+GLfloat vectorLength(vector_t v)
+{
+    // todo: Не стоит извлекать корень из 0?
+
+    return sqrt(pow(v.x, 2) + pow(v.y, 2) + pow(v.z, 2));
+}
+
+GLfloat vectorDot(vector_t v1, vector_t v2)
+{
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+vector_t vectorCross(vector_t v1, vector_t v2)
+{
+    vector_t v3;
+
+    v3.x = v1.y * v2.z - v1.z * v2.y;
+    v3.y = v1.z * v2.x - v1.x * v2.z;
+    v3.z = v1.x * v2.y - v1.y * v2.x;
+
+    return v3;
+}
+
+vector_t vectorSubtract(vector_t v1, vector_t v2)
+{
+    vector_t v3;
+
+    v3.x = v1.x - v2.x;
+    v3.y = v1.y - v2.y;
+    v3.z = v1.z - v2.z;
+
+    return v3;
+}
+
+void vectorNormalize(vector_t* v)
+{
+    float length = vectorLength(*v);
+
+    assert(length > 0.0f);
+
+    v->x /= length;
+    v->y /= length;
+    v->z /= length;
+}
+
+float degreesToRadians(float degrees)
+{
+    return (float) (degrees * (PI / 180.0f));
+}
 
 void matrixNormalize(float* x, float* y, float* z)
 {
@@ -152,7 +209,35 @@ void matrixFrustum(float* matrix, float left, float right, float bottom, float t
 void matrixPerspective(float* matrix, float fov, float aspect, float znear, float zfar)
 {
     float ymax, xmax;
-    ymax = znear * tanf(fov * 3.1415926535 / 360.0);
+    ymax = znear * tanf(fov * PI / 360.0);
     xmax = ymax * aspect;
     matrixFrustum(matrix, -xmax, xmax, -ymax, ymax, znear, zfar);
+}
+
+void lookAt(float* lookAt, vector_t position, vector_t target)
+{
+    vector_t cameraDirection, cameraRight;
+    vector_t up = {0.0f, 1.0f, 0.0f};
+
+    cameraDirection = vectorSubtract(position, target);
+    vectorNormalize(&cameraDirection);
+
+    cameraRight = vectorCross(up, cameraDirection);
+    vectorNormalize(&cameraRight);
+
+    float m1[16] = {
+        cameraRight.x, up.x, cameraDirection.x, 0.0f,
+        cameraRight.y, up.y, cameraDirection.y, 0.0f,
+        cameraRight.z, up.z, cameraDirection.z, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+
+    float m2[16] = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        -1 * position.x, -1 * position.y, -1 * position.z, 1.0f,
+    };
+
+    matrixMultiply(lookAt, m1, m2);
 }
